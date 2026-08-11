@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathMaster - Repaso</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js para las gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Ocultar scrollbar para los tabs de problemas */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .math-symbol {
+            font-family: "Times New Roman", Times, serif;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-gray-800 font-sans h-screen overflow-hidden transition-colors duration-300" id="body">
+    
+    <div class="flex flex-col md:flex-row h-full w-full">
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed md:relative z-30 w-72 h-full border-r shadow-xl md:shadow-none transform transition-transform duration-300 ease-in-out flex flex-col bg-white border-stone-200 -translate-x-full md:translate-x-0">
+            <div id="sidebar-header" class="p-6 border-b flex justify-between items-center border-stone-100 bg-orange-50/20">
+                <div class="flex items-center gap-2 font-bold text-xl tracking-tight text-orange-700" id="logo-text">
+                    <i data-lucide="calculator" class="w-8 h-8"></i>
+                    <span>MathMaster</span>
+                </div>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-stone-500 hover:text-red-500" id="close-menu-btn">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 flex-1 overflow-y-auto">
+                <nav class="space-y-2" id="nav-menu">
+                    <!-- Dinámico -->
+                </nav>
+            </div>
+
+            <div id="sidebar-footer" class="p-4 border-t border-stone-100 bg-white">
+                <div class="flex items-center justify-between mb-4">
+                    <span id="dark-mode-label" class="text-xs font-semibold text-stone-400">Modo Oscuro</span>
+                    <button onclick="toggleDarkMode()" id="dark-mode-btn" class="p-2 rounded-full transition-all bg-stone-100 text-stone-600 hover:bg-stone-200">
+                        <i data-lucide="moon" class="w-[18px] h-[18px]" id="dark-mode-icon"></i>
+                    </button>
+                </div>
+                <div id="author-text" class="text-center text-xs pt-2 border-t border-stone-100 text-stone-400">
+                    Realizado por: <span class="font-semibold text-stone-600">Teresa Floriano</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Overlay Móvil -->
+        <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden" onclick="toggleMobileMenu()"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto h-full w-full flex flex-col transition-colors duration-300 relative">
+            
+            <!-- Mobile Header -->
+            <div id="mobile-header" class="md:hidden p-4 flex items-center gap-3 border-b sticky top-0 z-10 shadow-sm bg-white border-stone-200">
+                <button onclick="toggleMobileMenu()" id="open-menu-btn" class="text-stone-600">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <span id="mobile-title" class="font-bold text-stone-800">MathMaster</span>
+            </div>
+
+            <!-- Content Container -->
+            <div class="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
+                <header class="mb-6">
+                    <h1 id="lesson-title" class="text-3xl font-extrabold mb-2 tracking-tight text-stone-800">Cargando...</h1>
+                    <p id="lesson-subtitle" class="text-sm font-medium text-stone-500">Ejercicios del PDF "Repaso Examen 1"</p>
+                </header>
+
+                <div id="problem-tabs" class="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide snap-x">
+                    <!-- Dinámico -->
+                </div>
+
+                <div id="problem-content" class="space-y-6 animate-fade-in pb-10">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        let activeTab = 'linear';
+        let activeProblemId = null;
+        let mobileMenuOpen = false;
+        let isDark = false;
+        let quizState = {};
+        let openStepsState = {}; 
+        let currentChartInstance = null;
+
+        // --- DATOS ---
+        const lessonsData = [
+          {
+            id: 'linear',
+            title: '1. Funciones Lineales',
+            icon: 'trending-up',
+            problems: [
+              {
+                id: 'p_lin_1', title: 'Divisas (Euros vs Dólares)',
+                statement: "Un día Ana pagó 3.6 dólares por 3 euros, y Carlos pagó 8.4 dólares por 7 euros. a) Encuentra la función del precio en euros (x). b) Represéntala. c) ¿Cuánto por 15 euros?",
+                simulation: { lines: [{ func: "1.2*x", name: "Precio" }], range: [0, 16], xLabel: "Euros (€)", yLabel: "Dólares ($)", points: [{x: 3, y: 3.6, label: 'Ana'}, {x: 7, y: 8.4, label: 'Carlos'}] },
+                steps: [
+                  { title: "Paso 1: Identificar Puntos", content: "Ana: $P_1(3, 3.6)$.\nCarlos: $P_2(7, 8.4)$." },
+                  { title: "Paso 2: Calcular Pendiente (m)", content: "Fórmula: $m = \\frac{y_2 - y_1}{x_2 - x_1}$\n$m = \\frac{8.4 - 3.6}{7 - 3} = \\frac{4.8}{4} = 1.2$" },
+                  { title: "Paso 3: Ecuación Punto-Pendiente", content: "Fórmula: $y - y_1 = m(x - x_1)$\n$y - 3.6 = 1.2(x - 3)$" },
+                  { title: "Paso 4: Despejar 'y'", content: "$y - 3.6 = 1.2x - 3.6$\n$y = 1.2x - 3.6 + 3.6$\n$y = 1.2x$" },
+                  { title: "Paso 5: Inciso (c) para 15 euros", content: "$y = 1.2(15)$\n$y = 18$" }
+                ],
+                quiz: [ { question: "¿Cuál es la función del precio?", options: ["$y = 1.2x$", "$y = 0.8x$", "$y = 3x + 0.6$", "$y = 1.2x + 1$"], correct: 0, explanation: "Pendiente 1.2." } ]
+              },
+              {
+                id: 'p_lin_2', title: 'Recolección de Algodón',
+                statement: "Tabla: (1h, 15kg), (2h, 45kg), (3h, 75kg). a) Calcula la función lineal. c) ¿Cuántos kg en 8 horas?",
+                simulation: { lines: [{ func: "30*x - 15", name: "Algodón", color: "#65a30d" }], range: [0, 9], xLabel: "Horas", yLabel: "Kg", points: [{x: 1, y: 15, label: '1h'}, {x: 3, y: 75, label: '3h'}] },
+                steps: [
+                  { title: "Paso 1: Calcular Pendiente", content: "Puntos $(1, 15)$ y $(2, 45)$.\n$m = \\frac{45 - 15}{2 - 1} = \\frac{30}{1} = 30$ kg/h." },
+                  { title: "Paso 2: Ecuación", content: "$y - 15 = 30(x - 1)$\n$y = 30x - 30 + 15$\n$y = 30x - 15$" },
+                  { title: "Paso 3: Producción en 8h", content: "$y(8) = 30(8) - 15$\n$y(8) = 240 - 15 = 225$ kg." }
+                ],
+                quiz: [ { question: "Producción en 8 horas:", options: ["225 kg", "240 kg", "215 kg", "255 kg"], correct: 0, explanation: "225 kg." } ]
+              },
+              {
+                id: 'p_lin_3', title: 'Tanques de Agua',
+                statement: "Miguel: Inicia 10cm, sube 1cm/min. Tía: Inicia 2cm, sube 3cm/min. Ambas miden 90cm.",
+                simulation: { lines: [{ func: "x + 10", name: "Miguel", color: "#ea580c" }, { func: "3*x + 2", name: "Tía", color: "#be123c" }], range: [0, 35], xLabel: "Min", yLabel: "Nivel (cm)", points: [{x: 4, y: 14, label: 'Cruce'}] },
+                steps: [
+                  { title: "Paso 1: Modelar Funciones", content: "Miguel: $y_M = 1x + 10$\nTía: $y_T = 3x + 2$" },
+                  { title: "Paso 2: Intersección", content: "$x + 10 = 3x + 2$\n$8 = 2x \\to x = 4$ min." },
+                  { title: "Paso 3: Tiempos de Llenado", content: "Miguel: $90 = x + 10 \\to x = 80$ min.\nTía: $90 = 3x + 2 \\to 88 = 3x \\to x \\approx 29.33$ min." }
+                ],
+                quiz: [ { question: "¿Cuándo se igualan los niveles?", options: ["4 min", "3 min", "5 min", "2 min"], correct: 0, explanation: "En el minuto 4." } ]
+              }
+            ]
+          },
+          {
+            id: 'quadratic', title: '2. Funciones Cuadráticas', icon: 'activity',
+            problems: [
+              {
+                id: 'p_quad_1', title: '1. Malabarista',
+                statement: "Pelota lanzada a 100cm. Altura máx 292cm a los 4s. Halla modelo y caída.",
+                simulation: { lines: [{ func: "-12*Math.pow(x-4,2) + 292", name: "Trayectoria", color: "#d97706" }], range: [0, 9], xLabel: "s", yLabel: "cm", points: [{x: 4, y: 292, label: 'V'}, {x: 8.93, y: 0, label: 'Suelo'}] },
+                steps: [
+                  { title: "Paso 1: Forma Vértice", content: "Vértice $(4, 292)$.\n$y = a(x - 4)^2 + 292$" },
+                  { title: "Paso 2: Hallar 'a'", content: "Con punto $(0, 100)$:\n$100 = a(-4)^2 + 292$\n$-192 = 16a \\to a = -12$\n$y = -12(x - 4)^2 + 292$" },
+                  { title: "Paso 3: Caída al Suelo (y=0)", content: "$0 = -12(x - 4)^2 + 292$\n$(x-4)^2 = 24.33$\n$x \\approx 4 + 4.93 = 8.93$ s" }
+                ],
+                quiz: [ { question: "¿Cuándo toca el suelo?", options: ["~8.93 s", "~4.93 s", "~9.5 s", "~8.0 s"], correct: 0, explanation: "8.93 s." } ]
+              },
+              {
+                id: 'p_quad_2', title: '2. Pelota (Gráfica)',
+                statement: "Lanzamiento desde 136cm. Máx (7.5s, 361cm). Cae en 17s. a) Modelo. b) Altura a 10s. c) Tiempo a 100cm.",
+                simulation: { lines: [{ func: "-4*Math.pow(x-7.5,2) + 361", name: "Pelota", color: "#be123c" }], range: [0, 18], xLabel: "s", yLabel: "cm", points: [{x: 7.5, y: 361, label: 'V'}, {x: 17, y: 0, label: 'Suelo'}] },
+                steps: [
+                  { title: "Paso 1: Hallar Ecuación", content: "Vértice $(7.5, 361) \\to y = a(x - 7.5)^2 + 361$.\nUsamos la raíz $(17, 0)$:\n$0 = a(17 - 7.5)^2 + 361$\n$0 = a(9.5)^2 + 361$\n$90.25a = -361 \\to a = -4$\nModelo: $y = -4(x - 7.5)^2 + 361$" },
+                  { title: "Paso 2: Altura a los 10s", content: "$y(10) = -4(10 - 7.5)^2 + 361$\n$y(10) = -4(2.5)^2 + 361$\n$y(10) = -25 + 361 = 336$ cm." }
+                ],
+                quiz: [ { question: "Altura a 10s:", options: ["336 cm", "300 cm", "325 cm", "340 cm"], correct: 0, explanation: "336 cm." } ]
+              }
+            ]
+          },
+          {
+            id: 'domain', title: '3. Dominio y Rango', icon: 'maximize',
+            problems: [
+              {
+                id: 'p_dom_1', title: '1. Radical',
+                statement: "Determina dominio, rango e inversa de $f(x) = 2 + \\sqrt{x+1}$.",
+                simulation: { squareAspect: true, lines: [{ func: "2 + Math.sqrt(x + 1)", name: "f(x)", color: "#ea580c" }, { func: "x >= 2 ? Math.pow(x - 2, 2) - 1 : null", name: "Inv", color: "#be123c" }, { func: "x", name: "y=x", color: "#a8a29e", dash: [5,5], strokeWidth: 1 }], range: [-10, 10], yDomain: [-10, 10], xLabel: "x", yLabel: "y" },
+                steps: [
+                  { title: "Paso 1: Determinar el Dominio", content: "$x + 1 \\ge 0 \\to x \\ge -1$\n**Dominio:** $[-1, \\infty)$" },
+                  { title: "Paso 2: Calcular la Inversa", content: "$y = 2 + \\sqrt{x+1} \\to y - 2 = \\sqrt{x+1}$\n$(y - 2)^2 = x + 1 \\to x = (y - 2)^2 - 1$\n$f^{-1}(x) = (x - 2)^2 - 1$" }
+                ],
+                quiz: [ { question: "Dominio Inversa:", options: ["$x \\ge 2$", "$x \\ge -1$", "Reales", "$x \\ge 0$"], correct: 0, explanation: "Corresponde al rango de la original." } ]
+              },
+              {
+                id: 'p_dom_2', title: '2. Racional',
+                statement: "Determina dominio e inversa de $h(x) = \\frac{6-3x}{5x+7}$.",
+                simulation: { squareAspect: true, lines: [{ func: "(6-3*x)/(5*x+7)", name: "h(x)", color: "#65a30d" }, { func: "x", name: "y=x", color: "#a8a29e", dash: [5,5], strokeWidth: 1 }], range: [-10, 10], yDomain: [-10, 10], xLabel: "x", yLabel: "y" },
+                steps: [
+                  { title: "Paso 1: Determinar el Dominio", content: "Denominador $\\neq 0$.\n$5x + 7 \\neq 0 \\to x \\neq -\\frac{7}{5}$." },
+                  { title: "Paso 2: Calcular la Inversa", content: "$y = \\frac{6-3x}{5x+7} \\to 5xy + 7y = 6 - 3x$\n$x(5y + 3) = 6 - 7y \\to x = \\frac{6-7y}{5y+3}$\n$h^{-1}(x) = \\frac{6-7x}{5x+3}$" }
+                ],
+                quiz: [ { question: "Dominio:", options: ["$x \\neq -7/5$", "$x \\neq 7/5$", "Reales", "$x \\neq 0$"], correct: 0, explanation: "-1.4." } ]
+              }
+            ]
+          },
+          {
+            id: 'translations', title: '4. Traslaciones', icon: 'move',
+            problems: [
+              {
+                id: 'p_trans_1', title: '1. Vertical Arriba',
+                statement: "Analiza el movimiento de: $h(x) = x^2 + 3$.",
+                simulation: { lines: [{ func: "Math.pow(x, 2)", name: "Base", color: "#a8a29e", dash: [5,5], strokeWidth: 2 }, { func: "Math.pow(x, 2) + 3", name: "Sube 3", color: "#ea580c" }], range: [-5, 5], xLabel: "x", yLabel: "y" },
+                steps: [ { title: "Análisis", content: "Función base: $f(x) = x^2$.\nTransformación: $f(x) + 3$.\nSuma 3 **fuera**: Sube 3 unidades." } ],
+                quiz: [ { question: "Dirección:", options: ["Arriba 3", "Abajo 3", "Derecha 3", "Izquierda 3"], correct: 0, explanation: "Suma externa." } ]
+              },
+              {
+                id: 'p_trans_9', title: '9. Reflexión y Horizontal',
+                statement: "Analiza el movimiento de: $j(x) = -(x-3)^3$.",
+                simulation: { lines: [{ func: "Math.pow(x, 3)", name: "Base", color: "#a8a29e", dash: [5,5], strokeWidth: 2 }, { func: "-Math.pow(x-3, 3)", name: "Ref+Der", color: "#d97706" }], range: [-2, 6], xLabel: "x", yLabel: "y", yDomain: [-10, 10] },
+                steps: [ { title: "Análisis", content: "1. Menos fuera: Reflexión.\n2. $-3$ dentro: Derecha 3." } ],
+                quiz: [ { question: "Descripción:", options: ["Reflexión, Derecha 3", "Reflexión, Izquierda 3", "Solo Derecha 3", "Solo Izquierda 3"], correct: 0, explanation: "Negativo invierte." } ]
+              }
+            ]
+          }
+        ];
+
+        // --- RENDERIZADOR MATEMÁTICO (PORTADO DE REACT) ---
+        function parseLatex(str, isDark) {
+            const mathColorClass = isDark ? "text-orange-200" : "text-orange-900";
+            const borderColorClass = isDark ? "border-orange-200" : "border-orange-900";
+            const arrowColorClass = isDark ? "text-stone-400" : "text-stone-600";
+            const symbolColorClass = isDark ? "text-amber-400" : "text-amber-700";
+
+            let html = '';
+            let i = 0;
+            
+            while (i < str.length) {
+                if (str.substr(i, 5) === '\\frac') {
+                    let j = i + 5;
+                    while (str[j] === ' ') j++; 
+                    if (str[j] !== '{') { i += 5; continue; }
+                    let bracketCount = 1; let numStart = ++j;
+                    while (j < str.length && bracketCount > 0) { if (str[j] === '{') bracketCount++; if (str[j] === '}') bracketCount--; j++; }
+                    const numerator = str.substring(numStart, j - 1);
+                    
+                    while (str[j] === ' ') j++; 
+                    if (str[j] !== '{') { i = j; continue; }
+                    bracketCount = 1; let denStart = ++j;
+                    while (j < str.length && bracketCount > 0) { if (str[j] === '{') bracketCount++; if (str[j] === '}') bracketCount--; j++; }
+                    const denominator = str.substring(denStart, j - 1);
+                    
+                    html += `<span class="inline-flex flex-col items-center align-middle mx-1.5" style="vertical-align: middle; display: inline-flex;">
+                        <span class="border-b-2 ${borderColorClass} px-1 text-center pb-[1px] mb-[1px] text-[0.9em] font-bold block">${parseLatex(numerator, isDark)}</span>
+                        <span class="text-center pt-[1px] text-[0.9em] font-bold block">${parseLatex(denominator, isDark)}</span>
+                    </span>`;
+                    i = j;
+                } 
+                else if (str.substr(i, 5) === '\\sqrt') {
+                    let j = i + 5;
+                    let rootIndex = null;
+                    if (str[j] === '[') {
+                        let k = j + 1; while (str[k] !== ']' && k < str.length) k++;
+                        rootIndex = str.substring(j + 1, k); j = k + 1;
+                    }
+                    if (str[j] === '{') {
+                        let bracketCount = 1; let argStart = ++j;
+                        while (j < str.length && bracketCount > 0) { if (str[j] === '{') bracketCount++; if (str[j] === '}') bracketCount--; j++; }
+                        const arg = str.substring(argStart, j - 1);
+                        html += `<span class="inline-flex items-baseline mx-0.5">
+                            ${rootIndex ? `<sup class="text-[0.6em] relative right-[-0.2em] top-[-0.5em] font-bold ${isDark ? 'text-stone-400' : 'text-stone-700'}">${rootIndex}</sup>` : ''}
+                            <span class="text-xl leading-none font-light scale-y-110 mr-[1px] ${mathColorClass}">√</span>
+                            <span class="border-t-2 ${borderColorClass} px-0.5 pt-0.5 ml-[-1px]">${parseLatex(arg, isDark)}</span>
+                        </span>`;
+                        i = j;
+                    }
+                }
+                else if (str[i] === '^') {
+                    i++; let content = "";
+                    if (str[i] === '{') {
+                        let j = i + 1; let bracketCount = 1;
+                        while (j < str.length && bracketCount > 0) { if (str[j] === '{') bracketCount++; if (str[j] === '}') bracketCount--; j++; }
+                        content = str.substring(i + 1, j - 1); i = j;
+                    } else { content = str[i]; i++; }
+                    html += `<sup class="text-xs ml-0.5 font-bold ${mathColorClass}">${parseLatex(content, isDark)}</sup>`;
+                }
+                else if (str[i] === '_') {
+                    i++; let content = "";
+                    if (str[i] === '{') {
+                        let j = i + 1; let bracketCount = 1;
+                        while (j < str.length && bracketCount > 0) { if (str[j] === '{') bracketCount++; if (str[j] === '}') bracketCount--; j++; }
+                        content = str.substring(i + 1, j - 1); i = j;
+                    } else { content = str[i]; i++; }
+                    html += `<sub class="text-xs ml-0.5 font-bold ${mathColorClass}">${parseLatex(content, isDark)}</sub>`;
+                }
+                else if (str.substr(i, 2) === '\\{') { html += `<span class="mx-0.5 font-bold text-lg">{</span>`; i += 2; }
+                else if (str.substr(i, 2) === '\\}') { html += `<span class="mx-0.5 font-bold text-lg">}</span>`; i += 2; }
+                else if (str.substr(i, 15) === '\\leftrightarrow') { html += `<span class="mx-2 font-bold ${symbolColorClass}">↔</span>`; i += 15; }
+                else if (str.substr(i, 3) === '\\to') { html += `<span class="mx-2 font-bold ${arrowColorClass}">→</span>`; i += 3; }
+                else if (str.substr(i, 3) === '\\ge') { html += `<span class="mx-1">≥</span>`; i += 3; }
+                else if (str.substr(i, 3) === '\\le') { html += `<span class="mx-1">≤</span>`; i += 3; }
+                else if (str.substr(i, 4) === '\\neq') { html += `<span class="mx-1">≠</span>`; i += 4; }
+                else if (str.substr(i, 3) === '\\pm') { html += `<span class="mx-1">±</span>`; i += 3; }
+                else if (str.substr(i, 8) === '\\approx') { html += `<span class="mx-1 font-bold">≈</span>`; i += 8; }
+                else if (str.substr(i, 6) === '\\infty') { html += `<span class="text-lg">∞</span>`; i += 6; }
+                else if (str.substr(i, 3) === '\\in') { html += `<span class="mx-1">∈</span>`; i += 3; }
+                else if (str.substr(i, 2) === '\\R') { html += `<span class="font-bold mx-0.5">R</span>`; i += 2; }
+                else { html += str[i]; i++; }
+            }
+            return html;
+        }
+
+        function renderMathText(text) {
+            if (!text) return "";
+            const parts = text.split('$');
+            let html = `<span class="inline-block leading-relaxed w-full ${isDark ? 'text-stone-300' : 'text-stone-800'}">`;
+            
+            parts.forEach((part, index) => {
+                if (index % 2 === 1) {
+                    const mathColorClass = isDark ? "text-orange-200" : "text-orange-900";
+                    html += `<span class="math-symbol italic font-bold tracking-tight text-lg mx-0.5 align-baseline ${mathColorClass}">${parseLatex(part, isDark)}</span>`;
+                } else {
+                    html += `<span class="font-medium ${isDark ? 'text-stone-300' : 'text-stone-700'}">${part.replace(/\n/g, '<br>')}</span>`;
+                }
+            });
+            
+            html += `</span>`;
+            return html;
+        }
+
+        // --- LÓGICA DE LA INTERFAZ ---
+
+        function initApp() {
+            if (!activeProblemId) {
+                const currentLesson = lessonsData.find(l => l.id === activeTab);
+                if (currentLesson && currentLesson.problems.length > 0) {
+                    activeProblemId = currentLesson.problems[0].id;
+                }
+            }
+            renderSidebar();
+            renderMainContent();
+            updateThemeUI();
+        }
+
+        function toggleMobileMenu() {
+            mobileMenuOpen = !mobileMenuOpen;
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if (mobileMenuOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function toggleDarkMode() {
+            isDark = !isDark;
+            updateThemeUI();
+            renderSidebar();
+            renderMainContent();
+        }
+
+        function updateThemeUI() {
+            const body = document.getElementById('body');
+            const darkModeIcon = document.getElementById('dark-mode-icon');
+            const darkModeBtn = document.getElementById('dark-mode-btn');
+
+            if (isDark) {
+                body.classList.remove('bg-stone-50', 'text-gray-800');
+                body.classList.add('bg-slate-950', 'text-slate-100');
+                
+                // Sidebar Header
+                document.getElementById('sidebar-header').className = "p-6 border-b flex justify-between items-center border-slate-800 bg-slate-900";
+                document.getElementById('logo-text').className = "flex items-center gap-2 font-bold text-xl tracking-tight text-orange-400";
+                document.getElementById('close-menu-btn').className = "md:hidden text-slate-400 hover:text-red-400";
+                
+                // Sidebar Footer
+                document.getElementById('sidebar-footer').className = "p-4 border-t border-slate-800 bg-slate-900";
+                document.getElementById('dark-mode-label').className = "text-xs font-semibold text-slate-500";
+                darkModeBtn.className = "p-2 rounded-full transition-all bg-slate-800 text-yellow-400 hover:bg-slate-700";
+                darkModeIcon.setAttribute('data-lucide', 'sun');
+                document.getElementById('author-text').className = "text-center text-xs pt-2 border-t border-slate-800 text-slate-600";
+                document.getElementById('author-text').innerHTML = `Realizado por: <span class="font-semibold text-slate-400">Teresa Floriano</span>`;
+
+                // Mobile Header
+                document.getElementById('mobile-header').className = "md:hidden p-4 flex items-center gap-3 border-b sticky top-0 z-10 shadow-sm bg-slate-900 border-slate-800";
+                document.getElementById('open-menu-btn').className = "text-slate-300";
+                document.getElementById('mobile-title').className = "font-bold text-slate-100";
+
+                // Main Headers
+                document.getElementById('lesson-title').className = "text-3xl font-extrabold mb-2 tracking-tight text-white";
+                document.getElementById('lesson-subtitle').className = "text-sm font-medium text-slate-400";
+
+            } else {
+                body.classList.remove('bg-slate-950', 'text-slate-100');
+                body.classList.add('bg-stone-50', 'text-gray-800');
+
+                // Sidebar Header
+                document.getElementById('sidebar-header').className = "p-6 border-b flex justify-between items-center border-stone-100 bg-orange-50/20";
+                document.getElementById('logo-text').className = "flex items-center gap-2 font-bold text-xl tracking-tight text-orange-700";
+                document.getElementById('close-menu-btn').className = "md:hidden text-stone-500 hover:text-red-500";
+
+                // Sidebar Footer
+                document.getElementById('sidebar-footer').className = "p-4 border-t border-stone-100 bg-white";
+                document.getElementById('dark-mode-label').className = "text-xs font-semibold text-stone-400";
+                darkModeBtn.className = "p-2 rounded-full transition-all bg-stone-100 text-stone-600 hover:bg-stone-200";
+                darkModeIcon.setAttribute('data-lucide', 'moon');
+                document.getElementById('author-text').className = "text-center text-xs pt-2 border-t border-stone-100 text-stone-400";
+                document.getElementById('author-text').innerHTML = `Realizado por: <span class="font-semibold text-stone-600">Teresa Floriano</span>`;
+
+                // Mobile Header
+                document.getElementById('mobile-header').className = "md:hidden p-4 flex items-center gap-3 border-b sticky top-0 z-10 shadow-sm bg-white border-stone-200";
+                document.getElementById('open-menu-btn').className = "text-stone-600";
+                document.getElementById('mobile-title').className = "font-bold text-stone-800";
+
+                // Main Headers
+                document.getElementById('lesson-title').className = "text-3xl font-extrabold mb-2 tracking-tight text-stone-800";
+                document.getElementById('lesson-subtitle').className = "text-sm font-medium text-stone-500";
+            }
+            
+            // Re-renderizar iconos
+            lucide.createIcons();
+            
+            // Forzar actualización de la gráfica si existe
+            if(currentChartInstance) {
+                renderChart(getProblemById(activeProblemId).simulation, isDark);
+            }
+        }
+
+        function setTab(tabId) {
+            activeTab = tabId;
+            const currentLesson = lessonsData.find(l => l.id === activeTab);
+            if (currentLesson && currentLesson.problems.length > 0) {
+                activeProblemId = currentLesson.problems[0].id;
+            }
+            if(mobileMenuOpen) toggleMobileMenu();
+            renderSidebar();
+            renderMainContent();
+        }
+
+        function setProblem(probId) {
+            activeProblemId = probId;
+            renderMainContent();
+        }
+
+        function toggleStep(idx) {
+            openStepsState[idx] = !openStepsState[idx];
+            renderMainContent();
+        }
+
+        function handleQuizSelect(qIdx, optIdx) {
+            const key = `${activeProblemId}-${qIdx}`;
+            if (quizState[key] && quizState[key].isChecked) return;
+            quizState[key] = { ...quizState[key], selected: optIdx, isChecked: false };
+            renderMainContent();
+        }
+
+        function handleQuizCheck(qIdx) {
+            const key = `${activeProblemId}-${qIdx}`;
+            if(quizState[key]) {
+                quizState[key].isChecked = true;
+                renderMainContent();
+            }
+        }
+
+        function getProblemById(id) {
+            const lesson = lessonsData.find(l => l.id === activeTab);
+            return lesson ? lesson.problems.find(p => p.id === id) : null;
+        }
+
+        function renderSidebar() {
+            const navMenu = document.getElementById('nav-menu');
+            let html = '';
+            
+            lessonsData.forEach(lesson => {
+                const isActive = activeTab === lesson.id;
+                let btnClass = isActive 
+                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/20' 
+                    : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-orange-400' : 'text-stone-600 hover:bg-orange-50 hover:text-orange-600');
+                
+                let iconColor = isActive ? 'text-white' : (isDark ? 'text-slate-500' : 'text-stone-400');
+                
+                html += `
+                <button onclick="setTab('${lesson.id}')" class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all text-left font-medium ${btnClass}">
+                    <div class="${iconColor}"><i data-lucide="${lesson.icon}" class="w-5 h-5"></i></div>
+                    <span class="text-sm font-semibold">${lesson.title}</span>
+                    ${isActive ? '<i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-80"></i>' : ''}
+                </button>`;
+            });
+            
+            navMenu.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function renderMainContent() {
+            const currentLesson = lessonsData.find(l => l.id === activeTab);
+            const currentProblem = currentLesson?.problems?.find(p => p.id === activeProblemId) || currentLesson?.problems?.[0];
+
+            document.getElementById('lesson-title').innerText = currentLesson.title;
+
+            // Render Tabs
+            const tabsContainer = document.getElementById('problem-tabs');
+            let tabsHtml = '';
+            currentLesson.problems.forEach(prob => {
+                const isActive = activeProblemId === prob.id;
+                let tabClass = isActive 
+                    ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105' 
+                    : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-white text-stone-600 border-stone-200 hover:bg-orange-50');
+                
+                tabsHtml += `<button onclick="setProblem('${prob.id}')" class="snap-start whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${tabClass}">${prob.title}</button>`;
+            });
+            tabsContainer.innerHTML = tabsHtml;
+
+            // Render Content
+            const contentContainer = document.getElementById('problem-content');
+            if(!currentProblem) { contentContainer.innerHTML = ''; return; }
+
+            let html = '';
+
+            // Section: Enunciado
+            let blockClass = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-stone-100';
+            let titleClass = isDark ? 'text-slate-200 border-slate-700' : 'text-stone-800 border-stone-100';
+            let textBgClass = isDark ? 'bg-slate-900/50 border-slate-700 text-slate-300' : 'bg-orange-50/30 border-orange-100 text-stone-700';
+            
+            html += `
+            <div class="p-6 rounded-2xl shadow-sm border ring-1 ring-black/5 ${blockClass}">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-2 ${titleClass}">
+                    <i data-lucide="book-open" class="text-orange-500 w-5 h-5"></i> Enunciado
+                </h2>
+                <div class="text-lg leading-relaxed p-5 rounded-xl border ${textBgClass}">
+                    ${renderMathText(currentProblem.statement)}
+                </div>
+                ${currentProblem.simulation ? `
+                    <div class="p-4 rounded-xl border shadow-sm mt-4 ${isDark ? 'bg-stone-800 border-stone-700' : 'bg-white border-orange-100'}">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold flex items-center gap-2 text-sm ${isDark ? 'text-stone-200' : 'text-stone-700'}">
+                                <i data-lucide="activity" class="text-orange-500 w-4 h-4"></i> ${currentProblem.simulation.squareAspect ? 'Simetría Visual' : 'Simulación Gráfica'}
+                            </h4>
+                            <button onclick="animateChart()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-600 text-white hover:bg-orange-700 shadow-md">
+                                <i data-lucide="play" class="w-3.5 h-3.5"></i> Reproducir
+                            </button>
+                        </div>
+                        <div class="w-full relative ${currentProblem.simulation.squareAspect ? 'aspect-square max-w-[500px] mx-auto' : 'h-80'}">
+                            <canvas id="simulationChart"></canvas>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>`;
+
+            // Section: Pasos
+            html += `
+            <div class="p-6 rounded-2xl shadow-sm border ring-1 ring-black/5 ${blockClass} mt-6">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-2 ${titleClass}">
+                    <i data-lucide="list" class="text-amber-500 w-5 h-5"></i> Procedimiento Detallado
+                </h2>
+                <div class="space-y-4">`;
+            
+            currentProblem.steps.forEach((step, idx) => {
+                const isOpen = !!openStepsState[idx];
+                const stepWrapClass = isOpen
+                    ? (isDark ? 'border-orange-500/50 bg-orange-900/20 shadow-md ring-1 ring-orange-500/30' : 'border-orange-400 bg-orange-50/40 shadow-md ring-1 ring-orange-200')
+                    : (isDark ? 'border-stone-700 bg-stone-800 hover:border-stone-600' : 'border-stone-200 bg-white hover:border-orange-200');
+                
+                const numClass = isOpen 
+                    ? 'bg-orange-600 text-white' 
+                    : (isDark ? 'bg-stone-700 text-stone-300' : 'bg-stone-100 text-stone-600');
+                
+                const stepTitleClass = isOpen 
+                    ? (isDark ? 'text-orange-300' : 'text-orange-900') 
+                    : (isDark ? 'text-stone-200' : 'text-stone-700');
+
+                html += `
+                <div class="border rounded-xl transition-all duration-300 overflow-hidden ${stepWrapClass}">
+                    <button onclick="toggleStep(${idx})" class="w-full flex items-center justify-between p-5 text-left focus:outline-none">
+                        <div class="flex items-center gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-sm ${numClass}">${idx + 1}</div>
+                            <span class="font-bold text-lg ${stepTitleClass}">${step.title}</span>
+                        </div>
+                        <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="${isOpen ? 'text-orange-500' : 'text-stone-400'} w-6 h-6"></i>
+                    </button>
+                    <div class="transition-all duration-300 ease-in-out" style="max-height: ${isOpen ? '2000px' : '0'}; opacity: ${isOpen ? '1' : '0'}; overflow: hidden;">
+                        <div class="p-6 pt-2 pl-20 text-lg border-t ${isDark ? 'border-stone-700 text-stone-300' : 'border-orange-100/50 text-stone-700'}">
+                            ${step.content.split('\n').filter(l => l.trim()).map(line => `<div class="mb-4 last:mb-0 leading-loose">${renderMathText(line)}</div>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += `</div></div>`;
+
+            // Section: Quiz
+            if (currentProblem.quiz && currentProblem.quiz.length > 0) {
+                html += `
+                <div class="p-6 rounded-2xl shadow-sm border ring-1 ring-black/5 ${blockClass} mt-6">
+                    <h3 class="text-lg font-bold mb-5 flex items-center gap-2 ${isDark ? 'text-slate-200' : 'text-stone-800'}">
+                        <i data-lucide="check-circle" class="text-emerald-500 w-5 h-5"></i> Comprobación
+                    </h3>
+                    <div class="grid gap-4">`;
+
+                currentProblem.quiz.forEach((q, idx) => {
+                    const stateKey = `${currentProblem.id}-${idx}`;
+                    const qState = quizState[stateKey] || {};
+                    const isCorrect = qState.selected === q.correct;
+
+                    let qWrapClass = isDark ? 'border-slate-700 bg-slate-900/50' : 'border-stone-100 bg-stone-50/30';
+                    let qTextClass = isDark ? 'text-slate-300' : 'text-stone-800';
+
+                    html += `<div class="p-5 border rounded-xl transition-all duration-200 ${qWrapClass}">
+                        <div class="font-medium mb-4 ${qTextClass}">${renderMathText(q.question)}</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">`;
+
+                    q.options.forEach((opt, optIdx) => {
+                        let optBtnClass = isDark ? 'border-slate-600 bg-slate-800 text-slate-400' : 'border-stone-200 bg-white text-stone-600';
+                        
+                        if (qState.selected === optIdx) {
+                            optBtnClass = 'border-orange-500 bg-orange-500/10 text-orange-600 ring-1 ring-orange-500 shadow-sm';
+                        }
+                        if (qState.isChecked) {
+                            if (optIdx === q.correct) {
+                                optBtnClass = 'border-emerald-500 bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500';
+                            } else if (qState.selected === optIdx && !isCorrect) {
+                                optBtnClass = 'border-red-500 bg-red-500/10 text-red-500 ring-1 ring-red-500';
+                            } else {
+                                optBtnClass += ' opacity-50'; // Opacar incorrectas no seleccionadas
+                            }
+                        }
+
+                        html += `<button onclick="handleQuizSelect(${idx}, ${optIdx})" ${qState.isChecked ? 'disabled' : ''} class="p-3.5 rounded-lg text-left text-sm font-medium transition-all border flex justify-between items-center ${optBtnClass}">
+                            <span>${renderMathText(opt)}</span>
+                            ${qState.isChecked && optIdx === q.correct ? '<i data-lucide="check-circle" class="text-emerald-500 w-[18px] h-[18px]"></i>' : ''}
+                        </button>`;
+                    });
+
+                    html += `</div>`;
+
+                    if (!qState.isChecked && qState.selected !== undefined) {
+                        html += `<button onclick="handleQuizCheck(${idx})" class="mt-4 w-full py-2.5 rounded-lg transition-colors text-sm font-bold shadow-md ${isDark ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-stone-800 text-white hover:bg-stone-700'}">Confirmar Respuesta</button>`;
+                    }
+
+                    if (qState.isChecked) {
+                        let resultClass = isCorrect 
+                            ? (isDark ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800' : 'bg-emerald-50 text-emerald-900 border-emerald-100')
+                            : (isDark ? 'bg-red-900/30 text-red-400 border-red-800' : 'bg-red-50 text-red-900 border-red-100');
+                        
+                        html += `<div class="mt-4 p-3.5 rounded-lg text-sm flex gap-3 animate-fade-in border ${resultClass}">
+                            <i data-lucide="${isCorrect ? 'check-circle' : 'x-circle'}" class="flex-shrink-0 w-5 h-5 mt-0.5"></i>
+                            <span class="leading-relaxed">${renderMathText(q.explanation)}</span>
+                        </div>`;
+                    }
+
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+
+            contentContainer.innerHTML = html;
+            lucide.createIcons();
+
+            if (currentProblem.simulation) {
+                setTimeout(() => renderChart(currentProblem.simulation, isDark), 100);
+            }
+        }
+
+        // --- CHART.JS INTEGRATION ---
+        function animateChart() {
+            const currentLesson = lessonsData.find(l => l.id === activeTab);
+            const currentProblem = currentLesson?.problems?.find(p => p.id === activeProblemId);
+            if(currentProblem && currentProblem.simulation) {
+                renderChart(currentProblem.simulation, isDark, true);
+            }
+        }
+
+        function renderChart(config, isDarkTheme, animate = false) {
+            const canvas = document.getElementById('simulationChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (currentChartInstance) {
+                currentChartInstance.destroy();
+            }
+
+            const colors = isDarkTheme 
+                ? ["#fb923c", "#fca5a5", "#bef264", "#fcd34d"] 
+                : ["#ea580c", "#be123c", "#65a30d", "#d97706"];
+            
+            const gridColor = isDarkTheme ? "#44403c" : "#e7e5e4";
+            const axisColor = isDarkTheme ? "#a8a29e" : "#78716c";
+
+            const datasets = config.lines.map((line, idx) => {
+                const data = [];
+                const [minX, maxX] = config.range || [-10, 10];
+                const steps = 100;
+                const stepSize = (maxX - minX) / steps;
+                
+                // Función string a función evaluable
+                const func = new Function('x', `return ${line.func}`);
+
+                for (let i = 0; i <= steps; i++) {
+                    const x = minX + i * stepSize;
+                    try {
+                        const y = func(x);
+                        if (typeof y === 'number' && !isNaN(y) && Math.abs(y) < 1000) {
+                            data.push({x, y});
+                        }
+                    } catch (e) {}
+                }
+
+                return {
+                    label: line.name,
+                    data: data,
+                    borderColor: line.color || colors[idx % colors.length],
+                    borderWidth: line.strokeWidth || 3,
+                    borderDash: line.dash || [],
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    fill: false,
+                    tension: 0.1
+                };
+            });
+
+            // Añadir Puntos de interés si los hay
+            if (config.points) {
+                const pointData = config.points.map(p => ({x: p.x, y: p.y, label: p.label}));
+                datasets.push({
+                    label: 'Puntos',
+                    data: pointData,
+                    backgroundColor: isDarkTheme ? "#fda4af" : "#57534e",
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false,
+                    // Plugin custom para texto luego
+                });
+            }
+
+            const chartConfig = {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: animate ? {
+                        duration: 2000,
+                        easing: 'linear',
+                        from: 1,
+                        delay: function(context) {
+                            return context.dataIndex * 20;
+                        }
+                    } : false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: config.range[0],
+                            max: config.range[1],
+                            grid: { color: gridColor },
+                            ticks: { color: axisColor },
+                            title: { display: !!config.xLabel, text: config.xLabel, color: axisColor, font: {weight: 'bold'} }
+                        },
+                        y: {
+                            type: 'linear',
+                            min: config.yDomain ? config.yDomain[0] : undefined,
+                            max: config.yDomain ? config.yDomain[1] : undefined,
+                            grid: { color: gridColor },
+                            ticks: { color: axisColor },
+                            title: { display: !!config.yLabel, text: config.yLabel, color: axisColor, font: {weight: 'bold'} }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: axisColor } },
+                        tooltip: {
+                            backgroundColor: isDarkTheme ? '#1c1917' : '#fff',
+                            titleColor: isDarkTheme ? '#f5f5f4' : '#000',
+                            bodyColor: isDarkTheme ? '#f5f5f4' : '#000',
+                            borderColor: isDarkTheme ? '#44403c' : '#e7e5e4',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(ctx) {
+                                    if(ctx.dataset.label === 'Puntos') {
+                                        return `${ctx.raw.label}: (${ctx.raw.x}, ${ctx.raw.y})`;
+                                    }
+                                    return `${ctx.dataset.label}: y = ${ctx.raw.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                },
+                // Plugin para dibujar las etiquetas de los puntos y ejes principales
+                plugins: [{
+                    id: 'customPointsAndAxes',
+                    afterDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        const xAxis = chart.scales.x;
+                        const yAxis = chart.scales.y;
+
+                        // Dibujar Ejes X e Y gruesos en 0
+                        ctx.save();
+                        ctx.strokeStyle = isDarkTheme ? "#78716c" : "#d6d3d1";
+                        ctx.lineWidth = 2;
+                        
+                        // Eje Y (en x=0)
+                        if(xAxis.min <= 0 && xAxis.max >= 0) {
+                            const x0 = xAxis.getPixelForValue(0);
+                            ctx.beginPath(); ctx.moveTo(x0, yAxis.top); ctx.lineTo(x0, yAxis.bottom); ctx.stroke();
+                        }
+                        // Eje X (en y=0)
+                        if(yAxis.min <= 0 && yAxis.max >= 0) {
+                            const y0 = yAxis.getPixelForValue(0);
+                            ctx.beginPath(); ctx.moveTo(xAxis.left, y0); ctx.lineTo(xAxis.right, y0); ctx.stroke();
+                        }
+                        
+                        // Dibujar etiquetas de puntos
+                        if(config.points) {
+                            ctx.font = 'bold 12px sans-serif';
+                            ctx.fillStyle = isDarkTheme ? "#fda4af" : "#57534e";
+                            ctx.textAlign = 'center';
+                            config.points.forEach(p => {
+                                const px = xAxis.getPixelForValue(p.x);
+                                const py = yAxis.getPixelForValue(p.y);
+                                ctx.fillText(p.label, px, py - 10);
+                            });
+                        }
+                        ctx.restore();
+                    }
+                }]
+            };
+
+            // Convertir Scatter a Line para las funciones
+            datasets.forEach(ds => {
+                if(ds.label !== 'Puntos') {
+                    ds.type = 'line';
+                }
+            });
+
+            currentChartInstance = new Chart(ctx, chartConfig);
+        }
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>

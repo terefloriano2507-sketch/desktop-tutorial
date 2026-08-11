@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador: Funciones Trigonométricas y Exponenciales</title>
+    
+    <!-- 1. Tailwind CSS para un diseño moderno y atractivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Chart.js para gráficos interactivos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- 3. KaTeX (Librería de fórmulas) HA SIDO ELIMINADA para evitar errores de carga -->
+
+    <style>
+        /* Estilo simple para las fórmulas en HTML */
+        body { font-family: 'Inter', sans-serif; }
+        .formula-display {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.25em;
+            letter-spacing: 0.5px;
+        }
+    </style>
+    
+    <!-- Configuración de Tailwind para usar la fuente Inter -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
+        
+        <!-- ENCABEZADO -->
+        <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-6 md:p-8">
+            <h1 class="text-3xl md:text-4xl font-bold">Simulador Interactivo de Funciones</h1>
+            <p class="mt-2 text-lg text-blue-100">Práctica de Modelado y Análisis de Fenómenos</p>
+        </header>
+
+        <!-- CONTENEDOR DE PESTAÑAS -->
+        <div id="tab-container" class="p-4 md:p-8">
+            
+            <!-- Botones de Pestañas -->
+            <div class="flex border-b border-gray-300 mb-6">
+                <button 
+                    class="tab-button flex-1 py-3 px-4 font-semibold text-lg border-b-4 border-blue-600 text-blue-600" 
+                    data-tab="trig">
+                    Parte A: Función Trigonométrica
+                </button>
+                <button 
+                    class="tab-button flex-1 py-3 px-4 font-semibold text-lg border-b-4 border-transparent text-gray-500 hover:text-gray-700" 
+                    data-tab="exp">
+                    Parte B: Función Exponencial
+                </button>
+            </div>
+
+            <!-- ===== CONTENIDO PESTAÑA 1: TRIGONOMÉTRICA ===== -->
+            <div id="trig" class="tab-content">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-4">Modelo de Temperatura Sinusoidal</h2>
+                
+                <!-- Contenedor principal: Controles + Gráfico -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Columna de Controles -->
+                    <div class="lg:col-span-1 bg-gray-50 p-6 rounded-lg shadow-inner space-y-6">
+                        
+                        <!-- Control: Amplitud (A) -->
+                        <div>
+                            <label for="amplitude" class="block text-sm font-medium text-gray-700">Amplitud (A)</label>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <input type="range" id="amplitude" min="0" max="10" value="3" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <span id="amplitude-val" class="font-bold text-blue-700 text-lg w-16 text-right">3 °C</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Simula el punto A.5 (duplicar amplitud).</p>
+                        </div>
+                        
+                        <!-- Control: Valor Medio (Vm) -->
+                        <div>
+                            <label for="mean-val" class="block text-sm font-medium text-gray-700">Valor Medio (V<sub>m</sub>)</label>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <input type="range" id="mean-val" min="10" max="30" value="22" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <span id="mean-val-val" class="font-bold text-blue-700 text-lg w-16 text-right">22 °C</span>
+                            </div>
+                        </div>
+
+                        <!-- Control: Periodo (P) -->
+                        <div>
+                            <label for="period" class="block text-sm font-medium text-gray-700">Periodo (P)</label>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <input type="range" id="period" min="4" max="48" value="24" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <span id="period-val" class="font-bold text-blue-700 text-lg w-16 text-right">24 h</span>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta de Fórmula -->
+                        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mt-4">
+                            <h4 class="font-semibold text-blue-800">Fórmula Aplicada:</h4>
+                            <div id="formula-trig-display" class="text-center py-2 formula-display">T(t) = 22 + 3 · sin((2π / 24) · t)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna de Gráfico y Resultados -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Tarjeta de Resultados -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-center">
+                                <h4 class="text-sm font-medium text-green-800">Temperatura Máxima</h4>
+                                <p id="temp-max" class="text-3xl font-bold text-green-700">25 °C</p>
+                            </div>
+                            <div class="bg-red-50 border border-red-200 p-4 rounded-lg text-center">
+                                <h4 class="text-sm font-medium text-red-800">Temperatura Mínima</h4>
+                                <p id="temp-min" class="text-3xl font-bold text-red-700">19 °C</p>
+                            </div>
+                        </div>
+
+                        <!-- Contenedor del Gráfico -->
+                        <div class="bg-white p-4 rounded-lg shadow-lg" style="height: 400px;">
+                            <canvas id="trigChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== CONTENIDO PESTAÑA 2: EXPONENCIAL ===== -->
+            <div id="exp" class="tab-content hidden">
+                <h2 class="text-2xl font-semibold text-indigo-700 mb-4">Modelo de Crecimiento de Peticiones</h2>
+
+                <!-- El aviso de "Nota:" ha sido eliminado -->
+
+                <!-- Contenedor principal: Controles + Gráfico -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Columna de Controles -->
+                    <div class="lg:col-span-1 bg-gray-50 p-6 rounded-lg shadow-inner space-y-6">
+                        
+                        <!-- Control: Peticiones Iniciales (P0) -->
+                        <div>
+                            <label for="p0" class="block text-sm font-medium text-gray-700">Peticiones Iniciales (P<sub>0</sub>)</label>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <input type="range" id="p0" min="100" max="5000" value="1000" step="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <span id="p0-val" class="font-bold text-indigo-700 text-lg w-20 text-right">1000</span>
+                            </div>
+                        </div>
+
+                        <!-- Control: Tasa de Crecimiento (r) -->
+                        <div>
+                            <label for="rate" class="block text-sm font-medium text-gray-700">Tasa de Crecimiento (r) por hora</label>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <input type="range" id="rate" min="1" max="20" value="5" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <span id="rate-val" class="font-bold text-indigo-700 text-lg w-20 text-right">5 %</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Simula el punto B.5 (comparar con 2%).</p>
+                        </div>
+
+                        <!-- Tarjeta de Fórmula -->
+                        <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mt-4">
+                            <h4 class="font-semibold text-indigo-800">Fórmula Aplicada:</h4>
+                            <div id="formula-exp-display" class="text-center py-2 formula-display">P(t) = 1000 · (1.050)<sup>t</sup></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna de Gráfico y Resultados -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Tarjeta de Resultados -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-gray-50 border p-4 rounded-lg text-center">
+                                <h4 class="text-sm font-medium text-gray-600">Peticiones tras 8h</h4>
+                                <p id="p8" class="text-2xl font-bold text-gray-800">...</p>
+                            </div>
+                            <div class="bg-gray-50 border p-4 rounded-lg text-center">
+                                <h4 class="text-sm font-medium text-gray-600">Peticiones tras 10h</h4>
+                                <p id="p10" class="text-2xl font-bold text-gray-800">...</p>
+                            </div>
+                            <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-center">
+                                <h4 class="text-sm font-medium text-green-800">Tiempo de Duplicación</h4>
+                                <p id="t-double" class="text-2xl font-bold text-green-700">...</p>
+                            </div>
+                        </div>
+
+                        <!-- Contenedor del Gráfico -->
+                        <div class="bg-white p-4 rounded-lg shadow-lg" style="height: 400px;">
+                            <canvas id="expChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- Fin de #tab-container -->
+
+    </div> <!-- Fin de .max-w-6xl -->
+
+    <script>
+        // === VARIABLES GLOBALES ===
+        let trigChart, expChart;
+        const trigCtx = document.getElementById('trigChart').getContext('2d');
+        const expCtx = document.getElementById('expChart').getContext('2d');
+        
+        // Elementos de UI Trigonométrica
+        const amplitudeSlider = document.getElementById('amplitude');
+        const meanValSlider = document.getElementById('mean-val');
+        const periodSlider = document.getElementById('period');
+        const amplitudeVal = document.getElementById('amplitude-val');
+        const meanValVal = document.getElementById('mean-val-val');
+        const periodVal = document.getElementById('period-val');
+        const formulaTrigDisplay = document.getElementById('formula-trig-display');
+        const tempMaxDisplay = document.getElementById('temp-max');
+        const tempMinDisplay = document.getElementById('temp-min');
+
+        // Elementos de UI Exponencial
+        const p0Slider = document.getElementById('p0');
+        const rateSlider = document.getElementById('rate');
+        const p0Val = document.getElementById('p0-val');
+        const rateVal = document.getElementById('rate-val');
+        const formulaExpDisplay = document.getElementById('formula-exp-display');
+        const p8Display = document.getElementById('p8');
+        const p10Display = document.getElementById('p10');
+        const tDoubleDisplay = document.getElementById('t-double');
+
+        // === LÓGICA DE PESTAÑAS ===
+        const tabContainer = document.getElementById('tab-container');
+        tabContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-button')) {
+                const tabName = e.target.dataset.tab;
+                
+                // Actualizar botones
+                tabContainer.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('border-blue-600', 'text-blue-600');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+                });
+                e.target.classList.add('border-blue-600', 'text-blue-600');
+                e.target.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+
+                // Mostrar contenido
+                tabContainer.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(tabName).classList.remove('hidden');
+            }
+        });
+
+        // === LÓGICA SIMULADOR TRIGONOMÉTRICO ===
+        
+        function updateTrigChart() {
+            const A = parseFloat(amplitudeSlider.value);
+            const Vm = parseFloat(meanValSlider.value);
+            const P = parseFloat(periodSlider.value);
+            
+            // 1. Actualizar etiquetas de los deslizadores
+            amplitudeVal.textContent = `${A} °C`;
+            meanValVal.textContent = `${Vm} °C`;
+            periodVal.textContent = `${P} h`;
+
+            // 2. Actualizar fórmula con HTML simple
+            // T(t) = Vm + A · sin((2π / P) · t)
+            const formulaHTML = `T(t) = ${Vm} + ${A} · sin((2π / ${P}) · t)`;
+            formulaTrigDisplay.innerHTML = formulaHTML;
+            
+            // 3. Calcular datos para el gráfico
+            const labels = [];
+            const data = [];
+            const maxX = Math.max(24, P) * 1.5; // Mostrar al menos 1.5 periodos o 24h
+            for (let t = 0; t <= maxX; t += maxX / 100) {
+                labels.push(t.toFixed(1));
+                const temp = Vm + A * Math.sin((2 * Math.PI / P) * t);
+                data.push(temp.toFixed(2));
+            }
+            
+            // 4. Actualizar datos del gráfico
+            trigChart.data.labels = labels;
+            trigChart.data.datasets[0].data = data;
+            
+            // 5. Calcular y mostrar resultados
+            const tempMax = Vm + A;
+            const tempMin = Vm - A;
+            tempMaxDisplay.textContent = `${tempMax.toFixed(1)} °C`;
+            tempMinDisplay.textContent = `${tempMin.toFixed(1)} °C`;
+            
+            // 6. Actualizar ejes del gráfico
+            trigChart.options.scales.y.min = Math.floor(tempMin - A*0.5 - 2);
+            trigChart.options.scales.y.max = Math.ceil(tempMax + A*0.5 + 2);
+            trigChart.options.scales.x.max = maxX;
+            
+            // 7. Redibujar el gráfico
+            trigChart.update('none'); // 'none' para una actualización sin animación
+            // Ya no se necesita renderMathInElement
+        }
+
+        // === LÓGICA SIMULADOR EXPONENCIAL ===
+
+        function updateExpChart() {
+            const P0 = parseFloat(p0Slider.value);
+            const r = parseFloat(rateSlider.value);
+            const b = 1 + (r / 100); // Base del exponente
+
+            // 1. Actualizar etiquetas de los deslizadores
+            p0Val.textContent = `${P0}`;
+            rateVal.textContent = `${r} %`;
+
+            // 2. Actualizar fórmula con HTML simple
+            // P(t) = P0 · (b)^t
+            const formulaHTML = `P(t) = ${P0} · (${b.toFixed(3)})<sup>t</sup>`;
+            formulaExpDisplay.innerHTML = formulaHTML;
+            
+            // 3. Calcular datos para el gráfico (0 a 10h como en la práctica)
+            const labels = [];
+            const data = [];
+            const maxX = 10;
+            for (let t = 0; t <= maxX; t += 0.5) {
+                labels.push(t.toFixed(1));
+                const peticiones = P0 * Math.pow(b, t);
+                data.push(peticiones.toFixed(0));
+            }
+            
+            // 4. Actualizar datos del gráfico
+            expChart.data.labels = labels;
+            expChart.data.datasets[0].data = data;
+            
+            // 5. Calcular y mostrar resultados
+            const p8 = P0 * Math.pow(b, 8);
+            const p10 = P0 * Math.pow(b, 10);
+            const tDouble = Math.log(2) / Math.log(b); // Punto B.4
+
+            p8Display.textContent = p8.toLocaleString('es-ES', { maximumFractionDigits: 0 });
+            p10Display.textContent = p10.toLocaleString('es-ES', { maximumFractionDigits: 0 });
+            tDoubleDisplay.textContent = `${tDouble.toFixed(2)} h`;
+            
+            // 6. Redibujar el gráfico
+            expChart.update('none');
+            // Ya no se necesita renderMathInElement
+        }
+
+        // === INICIALIZACIÓN ===
+        
+        window.onload = () => {
+            // Inicializar Gráfico Trigonométrico
+            trigChart = new Chart(trigCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Temperatura T(t) en °C',
+                        data: [],
+                        borderColor: 'rgb(37, 99, 235)', // blue-600
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.4, // Curva suave
+                        pointRadius: 0, // Sin puntos
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Tiempo (t) en horas', font: { size: 14 } },
+                            min: 0,
+                        },
+                        y: { 
+                            title: { display: true, text: 'Temperatura (°C)', font: { size: 14 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: (tooltipItems) => `Hora: ${tooltipItems[0].label} h`,
+                                label: (tooltipItem) => `Temp: ${parseFloat(tooltipItem.raw).toFixed(1)} °C`
+                            }
+                        }
+                    },
+                    animation: false // Desactivar animación en carga
+                }
+            });
+
+            // Inicializar Gráfico Exponencial
+            expChart = new Chart(expCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Número de Peticiones P(t)',
+                        data: [],
+                        borderColor: 'rgb(79, 70, 229)', // indigo-700
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Tiempo (t) en horas', font: { size: 14 } },
+                            min: 0,
+                            max: 10,
+                        },
+                        y: { 
+                            title: { display: true, text: 'Peticiones', font: { size: 14 } },
+                            beginAtZero: true,
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: (tooltipItems) => `Hora: ${tooltipItems[0].label} h`,
+                                label: (tooltipItem) => `Peticiones: ${parseInt(tooltipItem.raw).toLocaleString('es-ES')}`
+                            }
+                        }
+                    },
+                    animation: false
+                }
+            });
+
+            // Listeners para los deslizadores
+            amplitudeSlider.addEventListener('input', updateTrigChart);
+            meanValSlider.addEventListener('input', updateTrigChart);
+            periodSlider.addEventListener('input', updateTrigChart);
+            
+            p0Slider.addEventListener('input', updateExpChart);
+            rateSlider.addEventListener('input', updateExpChart);
+
+            // Carga inicial de los gráficos
+            updateTrigChart();
+            updateExpChart();
+            
+            // Ya no se necesita renderMathInElement(document.body);
+        };
+    </script>
+
+</body>
+</html>
+
